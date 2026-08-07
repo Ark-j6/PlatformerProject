@@ -1,0 +1,9 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+  </Configurations>
+  <Project Path="Game/Game.vcxproj" Id="66f20bfc-be9f-457e-87a7-e0120ee300d5">
+    <BuildDependency Project="PlatformerEngine/PlatformerEngine.vcxproj" />
+  </Project>
+  <Project Path="PlatformerEngine/PlatformerEngine.vcxproj" Id="7216f23a-b754-4f08-9c88-53d8d4d82bc3" />
+</Solution>
