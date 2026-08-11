@@ -24,7 +24,7 @@ namespace Platformer
 		// 게임 플레이 이벤트 함수
 		virtual void BeginPlay();
 		virtual void Tick(float deltaTime);
-		virtual void Draw();
+		virtual void Draw(int screenX = 0);
 
 		// 액터 제거 함수
 		void Destroy();
@@ -44,6 +44,11 @@ namespace Platformer
 
 		inline Vector2 GetPosition() const { return position; }
 		void SetPosition(const Vector2& newPosition);
+
+		Color GetColor() const { return color; }
+		virtual void ChangeColor();
+
+		inline int GetImageWidth() const { return width; }
 
 	protected:
 		// BeginPlay 이벤트 처리 여부 플래그

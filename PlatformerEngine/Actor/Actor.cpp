@@ -26,7 +26,7 @@ namespace Platformer
 	{
 	}
 
-	void Actor::Draw()
+	void Actor::Draw(int screenX)
 	{
 		// 비활성 상태이면 종료
 		if (!IsActive())
@@ -35,7 +35,9 @@ namespace Platformer
 		}
 
 		// 렌더러에 필요한 데이터 제출
-		Renderer::Get().Submit(image, position, color, sortingOrder);
+		Vector2 screenPos = position;
+		screenPos.x -= screenX;
+		Renderer::Get().Submit(image, screenPos, color, sortingOrder);
 	}
 
 	void Actor::Destroy()
@@ -59,5 +61,8 @@ namespace Platformer
 		}
 
 		position = newPosition;
+	}
+	void Actor::ChangeColor()
+	{
 	}
 }

@@ -11,10 +11,10 @@ namespace Platformer
 		Red = FOREGROUND_RED,
 		Green = FOREGROUND_GREEN,
 		Blue = FOREGROUND_BLUE,
+		White = Red | Green | Blue,
 		Yellow = Red | Green,
 		Cyan = Green | Blue,
 		Purple = Red | Blue,
-		White = Red | Green | Blue,
 		BrightWhite = White | FOREGROUND_INTENSITY
 	};
 }

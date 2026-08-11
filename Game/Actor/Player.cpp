@@ -7,6 +7,30 @@ using namespace Platformer;
 Player::Player(const Vector2& position) : super("P", position, Color::Green)
 {
 	sortingOrder = 3;
+	posX = static_cast<float>(position.x);
+	posY = static_cast<float>(position.y);
+}
+
+void Player::ChangeColor()
+{
+	switch (color)
+	{
+	case Color::White:
+		color = Color::Red;
+		break;
+	case Color::Red:
+		color = Color::Green;
+		break;
+	case Color::Green:
+		color = Color::Blue;
+		break;
+	case Color::Blue:
+		color = Color::White;
+		break;
+	case Color::BrightWhite:
+	default:
+		break;
+	}
 }
 
 void Player::Tick(float deltaTime)
@@ -20,46 +44,85 @@ void Player::Tick(float deltaTime)
 		return;
 	}
 
-	// 이동 처리를 위해 GameLevel 객체 얻어오기
-	std::shared_ptr<TestLevel> level = Cast<TestLevel>(GetOwner());
-
 	// 이동 처리
-	if (Input::Get().GetKeyDown(VK_RIGHT))
+	if (Input::Get().GetKey(VK_RIGHT))
 	{
-		// 이동하려는 위치 값 만들기
-		Vector2 newPosition = GetPosition();
-		newPosition.x += 1;
-
-		// 이동 가능 여부 확인
-		if (level && level->CanMove(newPosition))
-		{
-			//새로운 위치 설정
-			SetPosition(newPosition);
-		}
-	}
-	if (Input::Get().GetKeyDown(VK_LEFT))
-	{
-		// 이동하려는 위치 값 만들기
-		Vector2 newPosition = GetPosition();
-		newPosition.x -= 1;
-
-		// 이동 가능 여부 확인
-		if (level && level->CanMove(newPosition))
-		{
-			//새로운 위치 설정
-			SetPosition(newPosition);
-		}
+		Move(1.f, deltaTime);
 	}
 
-	if (isActive)
+	if (Input::Get().GetKey(VK_LEFT))
 	{
-		Vector2 newPosition = GetPosition();
-		newPosition.y += 1;
+		Move(-1.f, deltaTime);
+	}
 
-		if (level && level->CanMove(newPosition))
+	// 점프
+	if (Input::Get().GetKeyDown(VK_SPACE) && !isFirstJumping)
+	{
+		isFirstJumping = true;
+		velocityY -= jumpSpeed;
+		RequestChangeColor();
+	}
+	      
+	velocityY += gravity * deltaTime;
+	if (velocityY > 30.f)
+	{
+		velocityY = 30.f;
+	}
+	float d = posY + velocityY * deltaTime;
+
+	std::shared_ptr<TestLevel> level = Cast<TestLevel>(GetOwner());
+	Vector2 newPosition = GetPosition();
+	newPosition.y = static_cast<int>(d);
+	if (level && level->CanMove(newPosition, color))
+	{
+		posY = d;
+		SetPosition(newPosition);
+	}
+	else
+	{
+		isFirstJumping = false;
+		isJumping = false;
+		velocityY = 0;
+	}
+}
+
+
+void Player::Move(float direction, float deltaTime)
+{
+	int curr = static_cast<int>(posX);
+	float amount = direction * moveSpeed * deltaTime;
+	posX += amount;
+	int next = static_cast<int>(posX);
+
+	if (next != curr)
+	{
+		std::shared_ptr<TestLevel> level = Cast<TestLevel>(GetOwner());
+		Vector2 newPosition = GetPosition();
+		newPosition.x = next;
+		if (level && level->CanMove(newPosition, color))
 		{
-			//새로운 위치 설정
 			SetPosition(newPosition);
+			CheckCameraView();
 		}
+		else
+		{
+			posX -= amount;
+		}
+	}
+}
+
+void Player::CheckCameraView()
+{
+	if (std::shared_ptr<TestLevel> level = Cast<TestLevel>(GetOwner()))
+	{
+		level->CheckPlayerXPos(GetPosition().x);
+	}
+}
+
+void Player::RequestChangeColor()
+{
+	if (std::shared_ptr<TestLevel> level = Cast<TestLevel>(GetOwner()))
+	{
+		level->ChangeActorColors();
 	}
 }
