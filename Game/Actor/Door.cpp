@@ -31,6 +31,6 @@ void Door::Draw(int screenX)
 bool Door::CheckActorPosition(const Vector2& position)
 {
 	Vector2 under = GetPosition();
-	under.y -= 1;
+	under.y += 1;
     return (GetPosition() == position) || (under == position);
 }

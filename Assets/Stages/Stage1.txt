@@ -9,7 +9,7 @@
 #                                                           [RRRRRR]    *WWWWWW*                                       #
 #                           (WWWWWWW)                                                            (BBBBB)               #
 #                                                      #                         ^^^^^                                 #
-#                 [RRRRR]   #           *BBBBBB*       #     {BBBBBB}                                                  #
+#                 [RRRRR]   #           *BBBBBB*       #     (BBBBBB)                                                  #
 #                           #                          #                          #                                    #
 #       [WWWWWW]            #      [WWWWWWW]           #[GGGGG]            ^^^^^  #                            M       #
 #  P        ^^              #    ^^^                   #      ^                   #     ^^                             #

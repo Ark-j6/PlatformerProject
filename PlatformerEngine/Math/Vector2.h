@@ -23,6 +23,12 @@ namespace Platformer
 		Vector2 operator*(const Vector2& other) const;
 		Vector2 operator/(const Vector2& other) const;
 
+		//template<typename T>
+		//Vector2 operator*(const T value) const
+		//{
+		//	return Vector2(static_cast<int>(x * value), static_cast<int>(y * value));
+		//}
+
 		// 대입 연산자 오버로딩
 		Vector2& operator=(const Vector2& other);
 

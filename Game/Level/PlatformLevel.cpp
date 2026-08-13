@@ -1,4 +1,4 @@
-﻿#include "TestLevel.h"
+﻿#include "PlatformLevel.h"
 #include <Game/GameManager.h>
 #include <Render/Renderer.h>
 #include <Math/Vector2.h>
@@ -9,29 +9,32 @@
 #include <Actor/Key.h>
 #include <Actor/Door.h>
 
+#include <Windows.h>
+
 #include <fstream>
 #include <cassert>
 
 using namespace Platformer;
 
-TestLevel::TestLevel(const std::string& levelName) : levelName(levelName)
+PlatformLevel::PlatformLevel(const std::string& levelName) : levelName(levelName)
 {
 }
 
-void TestLevel::OnInitialized()
+void PlatformLevel::OnInitialized()
 {
 	super::OnInitialized();
 
 	screenWidth = Engine::Get().GetScreenWidth();
 
 	LoadMap();
+	LoadMapConfig();
 	maxScreenStartX = levelWidth - screenWidth;
 
 	levelState = LevelState::Start;
 	player->UpdatePlayerInput(true);
 }
 
-void TestLevel::Tick(float deltaTime)
+void PlatformLevel::Tick(float deltaTime)
 {
 	super::Tick(deltaTime);
 
@@ -43,7 +46,7 @@ void TestLevel::Tick(float deltaTime)
 	}
 }
 
-void TestLevel::Draw()
+void PlatformLevel::Draw()
 {
 	for (std::shared_ptr<Actor>& actor : actorList)
 	{
@@ -63,17 +66,17 @@ void TestLevel::Draw()
 	}
 }
 
-void TestLevel::LoadMap()
+void PlatformLevel::LoadMap()
 {
 	// 최종 경로 조립
-	std::string path = std::string("../Assets/") + levelName;
+	std::string path = std::string("../Assets/Stages/") + levelName;
 
 	/* C++ 스타일 */
 	// 파일 열기 - 파일 크기와 실제 읽을 바이트 수를 일치시키기 위해 binary 사용
 	std::ifstream file(path, std::ios::binary);
 	if (!file.is_open())
 	{
-		assert(false && "falied to open a sokobatn stage file\n");
+		assert(false && "falied to open stage file\n");
 		return;
 	}
 	
@@ -231,7 +234,102 @@ void TestLevel::LoadMap()
 	file.close();
 }
 
-void TestLevel::UpdateScreen(float deltaTime)
+void PlatformLevel::LoadMapConfig()
+{
+	std::string path = std::string("../Assets/StageConfig/") + levelName;
+
+	std::ifstream file(path, std::ios::binary);
+	if (!file.is_open())
+	{
+		assert(false && "falied to open stage file\n");
+		return;
+	}
+
+	Vector2 pos = Vector2::Zero;
+	std::string str;
+	size_t prev = 0, current = 0;
+	
+	PlatformConfig config = {};
+	int idx = 0;
+
+	while (std::getline(file, str))
+	{
+		if (!str.empty() && str.back() == '\r')
+			str.pop_back();
+
+		if (str.front() == '[' && str.back() == ']')
+		{
+			OutputDebugStringA(str.c_str());
+			continue;
+		}
+		else if (!str.empty())
+		{
+			config = {};
+			idx = 0;
+			prev = 0;
+			while ((current = str.find(',', prev)) != std::string::npos)
+			{
+				ParsingConfig(config, str.substr(prev, current - prev), idx);
+				prev = current + 1;
+				++idx;
+			}
+			ParsingConfig(config, str.substr(prev), idx);
+		}
+
+		if (Actor* actor = GetActorByRequestList(config.basePosition))
+		{
+			if (MovableObject* mo = dynamic_cast<MovableObject*>(actor))
+			{
+				mo->SetMovableConfig(config);
+			}
+			else
+			{
+				assert(false && "MovalbeObject error\n");
+			}
+		}
+		else
+		{
+			assert(false && "basePostion error\n");
+		}
+	}
+
+}
+
+void PlatformLevel::ParsingConfig(Platformer::PlatformConfig& config, const std::string& value, int configIndex)
+{
+	switch (configIndex)
+	{
+	case 0:
+		config.basePosition.x = std::stoi(value);
+		break;
+	case 1:
+		config.basePosition.y = std::stoi(value);
+		break;
+	case 2:
+	{
+		if (value == "U")
+			config.direction = Vector2(0, -1);
+		else if (value == "D")
+			config.direction = Vector2(0, 1);
+		else if (value == "L")
+			config.direction = Vector2(-1, 0);
+		else							  
+			config.direction = Vector2(1, 0);
+	}
+		break;
+	case 3:
+		config.distance = std::stoi(value);
+		break;
+	case 4:
+		config.speed = std::stoi(value);
+		break;
+	default:
+		config.isLooping = std::stoi(value) == 0 ? false : true;
+		break;
+	}
+}
+
+void PlatformLevel::UpdateScreen(float deltaTime)
 {
 	float posX = player.get()->GetPosition().x - screenStartX;
 
@@ -254,7 +352,7 @@ void TestLevel::UpdateScreen(float deltaTime)
 	}
 }
 
-void TestLevel::VictoryEffect(float deltaTime)
+void PlatformLevel::VictoryEffect(float deltaTime)
 {
 	if (victoryEffectTimer < 4.0f)
 	{
@@ -277,7 +375,7 @@ void TestLevel::VictoryEffect(float deltaTime)
 	}
 }
 
-Actor* TestLevel::GetActorAt(const Platformer::Vector2& nextPosition)
+Actor* PlatformLevel::GetActorAt(const Platformer::Vector2& nextPosition)
 {
 	for (std::shared_ptr<Actor>& actor : actorList)
 	{
@@ -295,7 +393,25 @@ Actor* TestLevel::GetActorAt(const Platformer::Vector2& nextPosition)
 	return nullptr;
 }
 
-bool TestLevel::CanMove(const Actor* other, Color color)
+Actor* PlatformLevel::GetActorByRequestList(const Platformer::Vector2& nextPosition)
+{
+	for (std::shared_ptr<Actor>& actor : addRequestedActorList)
+	{
+		if (actor->CheckActorPosition(nextPosition))
+		{
+			if (actor->IsTypeOf<Player>())
+			{
+				continue;
+			}
+
+			return actor.get();
+		}
+	}
+
+	return nullptr;
+}
+
+bool PlatformLevel::CanMove(const Actor* other, Color color)
 {
 	if (other)
 	{
@@ -316,7 +432,7 @@ bool TestLevel::CanMove(const Actor* other, Color color)
 	return true;
 }
 
-void TestLevel::HandleInteraction(Actor* target, const Platformer::Vector2& direction)
+void PlatformLevel::HandleInteraction(Actor* target, const Platformer::Vector2& direction)
 {
 	assert(target && "No Actor for interaction");
 
@@ -346,9 +462,13 @@ void TestLevel::HandleInteraction(Actor* target, const Platformer::Vector2& dire
 
 		}
 	}
+	else if (target->IsTypeOf<Platform>())
+	{
+		player.get()->UpdateStandingPlatform(dynamic_cast<Platform*>(target));
+	}
 }
 
-void TestLevel::ChangeActorColors()
+void PlatformLevel::ChangeActorColors()
 {
 	for (std::shared_ptr<Actor>& actor : actorList)
 	{

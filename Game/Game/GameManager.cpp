@@ -1,11 +1,13 @@
 ﻿#include "GameManager.h"
 #include <Level/TitleLevel.h>
-#include <Level/TestLevel.h>
+#include <Level/PlatformLevel.h>
 
 #include <fileSystem>
 
 GameManager::GameManager()
 {
+	LoadStageList();
+
 	menuList.emplace_back(std::make_shared<TitleLevel>());
 	menuIndex = MenuState::Title;
 	mainLevel = menuList[static_cast<int>(menuIndex)];
@@ -52,5 +54,5 @@ void GameManager::LoadNextGameLevel()
 		return;
 	}
 
-	AddNewLevel<TestLevel>(stageList[currentStageIndex]);
+	AddNewLevel<PlatformLevel>(stageList[currentStageIndex]);
 }

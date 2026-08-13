@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <Level/Level.h>
 #include <string>
+#include <Actor/Movable.h>
 
 class Player;
 
@@ -13,12 +14,12 @@ enum class LevelState
 };
 
 
-class TestLevel : public Platformer::Level
+class PlatformLevel : public Platformer::Level
 {
-	TYPE_DECLARATIONS(TestLevel, Level)
+	TYPE_DECLARATIONS(PlatformLevel, Level)
 		
 public:
-	TestLevel(const std::string& levelName);
+	PlatformLevel(const std::string& levelName);
 
 private:
 	virtual void OnInitialized() override;
@@ -26,6 +27,8 @@ private:
 	virtual void Draw() override;
 	
 	void LoadMap();
+	void LoadMapConfig();
+	void ParsingConfig(Platformer::PlatformConfig& config, const std::string& value, int configIndex);
 
 	void UpdateScreen(float deltaTime);
 
@@ -33,6 +36,7 @@ private:
 
 public:
 	Platformer::Actor* GetActorAt(const Platformer::Vector2& nextPosition);
+	Platformer::Actor* GetActorByRequestList(const Platformer::Vector2& nextPosition);
 	bool CanMove(const Platformer::Actor* other, Platformer::Color color);
 	void HandleInteraction(Platformer::Actor* target, const Platformer::Vector2& direction);
 

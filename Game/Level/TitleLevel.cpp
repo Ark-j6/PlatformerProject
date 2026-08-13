@@ -1,5 +1,5 @@
 ﻿#include "TitleLevel.h"
-#include "TestLevel.h"
+#include "PlatformLevel.h"
 #include <Render/Renderer.h>
 #include <Input/Input.h>
 #include <Engine/Engine.h>
@@ -9,11 +9,17 @@ using namespace Platformer;
 
 TitleLevel::TitleLevel()
 {
+}
+
+void TitleLevel::OnInitialized()
+{
+	Level::OnInitialized();
+
 	itemList.emplace_back(std::make_unique<MenuItem>(
 		"Start Game"
 		, []()
 		{
-			Engine::Get().AddNewLevel<TestLevel>("TestMap.txt");
+			Engine::Get().AddNewLevel<PlatformLevel>("Stage1.txt");
 		})
 	);
 
@@ -83,7 +89,7 @@ void TitleLevel::Draw()
 		// 아이템 그리기
 		Renderer::Get().Submit(
 			str,
-			Vector2(screenWidth - interval - str.length(), center.y + interval + ix),
+			Vector2(static_cast<int>(screenWidth - interval - str.length()), center.y + interval + ix),
 			textColor
 		);
 	}

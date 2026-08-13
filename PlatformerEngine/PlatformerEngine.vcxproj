@@ -107,6 +107,7 @@ xcopy ..\Config\* $(OutDir)..\Config\ /e /y /i</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Actor\Actor.h" />
+    <ClInclude Include="Actor\Movable.h" />
     <ClInclude Include="Core\Core.h" />
     <ClInclude Include="Core\PlatformerObject.h" />
     <ClInclude Include="Engine\Engine.h" />
@@ -119,6 +120,7 @@ xcopy ..\Config\* $(OutDir)..\Config\ /e /y /i</Command>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Actor\Actor.cpp" />
+    <ClCompile Include="Actor\Movable.cpp" />
     <ClCompile Include="Engine\Engine.cpp" />
     <ClCompile Include="Input\Input.cpp" />
     <ClCompile Include="Level\Level.cpp" />

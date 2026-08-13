@@ -1,6 +1,8 @@
 #pragma once
 #include <Actor/Actor.h>
 
+class Platform;
+
 class Player : public Platformer::Actor
 {
 	TYPE_DECLARATIONS(Player, Actor)
@@ -15,15 +17,22 @@ public:
 
 	inline void UpdatePlayerInput(bool isEnabled) { enableInput = isEnabled; }
 
+	void UpdateStandingPlatform(Platform* platform);
+
 private:
 	virtual void Tick(float deltaTime) override;
-	void Move(float direction, float deltaTime);
+
+	void ProcessInput(float direction, float deltaTime);
+
+	void legacyMove(float direction, float deltaTime);
 	void RequestMove(bool isX, const int next, const float amount);
 
 	void RequestChangeColor();
 
 private:
 	bool enableInput = false;
+
+	Platform* standingPlatform = nullptr;
 
 	float posX = 0.f;
 	float posY = 0.f;
