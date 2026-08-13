@@ -37,6 +37,9 @@ void Player::Tick(float deltaTime)
 {
 	super::Tick(deltaTime);
 
+	if (!enableInput)
+		return;
+
 	if (Input::Get().GetKeyDown(VK_ESCAPE))
 	{
 		// 종료 처리
@@ -56,9 +59,9 @@ void Player::Tick(float deltaTime)
 	}
 
 	// 점프
-	if (Input::Get().GetKeyDown(VK_SPACE) && !isFirstJumping)
+	if (Input::Get().GetKeyDown(VK_SPACE) && !isJumping)
 	{
-		isFirstJumping = true;
+		isJumping = true;
 		velocityY -= jumpSpeed;
 		RequestChangeColor();
 	}
@@ -68,22 +71,9 @@ void Player::Tick(float deltaTime)
 	{
 		velocityY = 30.f;
 	}
-	float d = posY + velocityY * deltaTime;
-
-	std::shared_ptr<TestLevel> level = Cast<TestLevel>(GetOwner());
-	Vector2 newPosition = GetPosition();
-	newPosition.y = static_cast<int>(d);
-	if (level && level->CanMove(newPosition, color))
-	{
-		posY = d;
-		SetPosition(newPosition);
-	}
-	else
-	{
-		isFirstJumping = false;
-		isJumping = false;
-		velocityY = 0;
-	}
+	float amount = posY + velocityY * deltaTime;
+	int next = static_cast<int>(amount);
+	RequestMove(false, next, amount);
 }
 
 
@@ -96,26 +86,65 @@ void Player::Move(float direction, float deltaTime)
 
 	if (next != curr)
 	{
-		std::shared_ptr<TestLevel> level = Cast<TestLevel>(GetOwner());
-		Vector2 newPosition = GetPosition();
-		newPosition.x = next;
-		if (level && level->CanMove(newPosition, color))
-		{
-			SetPosition(newPosition);
-			CheckCameraView();
-		}
-		else
-		{
-			posX -= amount;
-		}
+		RequestMove(true, next, amount);
 	}
 }
 
-void Player::CheckCameraView()
+void Player::RequestMove(bool isX, const int next, const float amount)
 {
 	if (std::shared_ptr<TestLevel> level = Cast<TestLevel>(GetOwner()))
 	{
-		level->CheckPlayerXPos(GetPosition().x);
+		Vector2 newPosition = GetPosition();
+		isX ? newPosition.x = next : newPosition.y = next;
+
+		// 해당 위치에 액터가 있을 경우, 이동 가능한 액터인지 검사
+		if (Actor* actor = level->GetActorAt(newPosition))
+		{
+			if (level->CanMove(actor, color))
+			{
+				//isX ? posX += amount : posY += amount;
+				if (!isX) posY = amount;
+				SetPosition(newPosition);
+			}
+			else
+			{
+				if (isX)
+				{ 
+					posX -= amount;
+				}
+				else
+				{
+					isJumping = false;
+					velocityY = 0;
+				}
+			}
+
+			// 액터가 있으므로 이동 가능 여부와 상관없이 상호작용 검사
+			Vector2 direction = newPosition - GetPosition();
+			level->HandleInteraction(actor, direction);
+		}
+		else
+		{
+			// 액터가 없을 경우 불가능한 지역(래벨 범위 외부)인지 여부만 확인
+ 			if (isX ? level->CheckValidXPos(next) : level->CheckValidYPos(next))
+			{
+				//isX ? posX += amount : posY += amount;
+				if (!isX) posY = amount;
+				SetPosition(newPosition);
+			}
+			else
+			{
+				if (isX)
+				{
+					posX -= amount;
+				}
+				else
+				{
+					isJumping = false;
+					velocityY = 0;
+				}
+			}
+		}
 	}
 }
 

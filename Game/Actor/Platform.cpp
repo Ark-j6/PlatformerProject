@@ -2,9 +2,17 @@
 
 using namespace Platformer;
 
-Platform::Platform(const Vector2& position, Color color, bool isChangable, bool isMovable) : Terrain("-", position, color), isColorChangable(isChangable), isMovable(isMovable)
+Platform::Platform(const Vector2& position, Color color, bool isChangable, bool isMovable) : Actor("-", position, color), isColorChangable(isChangable), isMovable(isMovable)
 {
 	sortingOrder = 3;
+}
+
+bool Platform::CheckActorPosition(const Vector2& position)
+{
+	int maxX = GetPosition().x + width;
+	bool isX = GetPosition().x <= position.x && position.x <= maxX;
+
+	return isX && position.y == GetPosition().y;
 }
 
 void Platform::ChangeColor()

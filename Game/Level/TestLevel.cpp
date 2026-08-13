@@ -1,36 +1,45 @@
 ﻿#include "TestLevel.h"
+#include <Game/GameManager.h>
+#include <Render/Renderer.h>
 #include <Math/Vector2.h>
 #include <Actor/Player.h>
 #include <Actor/Terrain.h>
 #include <Actor/Platform.h>
 #include <Actor/Obstacle.h>
+#include <Actor/Key.h>
+#include <Actor/Door.h>
 
 #include <fstream>
 #include <cassert>
 
 using namespace Platformer;
 
+TestLevel::TestLevel(const std::string& levelName) : levelName(levelName)
+{
+}
+
 void TestLevel::OnInitialized()
 {
 	super::OnInitialized();
 
-	LoadMap("TestMap.txt");
+	screenWidth = Engine::Get().GetScreenWidth();
+
+	LoadMap();
 	maxScreenStartX = levelWidth - screenWidth;
+
+	levelState = LevelState::Start;
+	player->UpdatePlayerInput(true);
 }
 
 void TestLevel::Tick(float deltaTime)
 {
 	super::Tick(deltaTime);
 
-	int intScreenX = static_cast<int>(screenStartX);
+	UpdateScreen(deltaTime);
 
-	if (intScreenX < targetScreenX)
+	if (levelState == LevelState::ClearEffect)
 	{
-		screenStartX += screenSpeed * deltaTime;
-	}
-	else if (intScreenX > targetScreenX)
-	{
-		screenStartX -= screenSpeed * deltaTime;
+		VictoryEffect(deltaTime);
 	}
 }
 
@@ -48,15 +57,16 @@ void TestLevel::Draw()
 		int screenEnd = static_cast<int>(screenStartX + screenWidth);
 		if (screenStartX <= actor->GetPosition().x && actor->GetPosition().x < screenEnd)
 		{
-			actor->Draw(static_cast<int>(screenStartX));
+			int pivot = static_cast<int>(screenStartX - Engine::Get().GetXOffset());
+			actor->Draw(pivot);
 		}
 	}
 }
 
-void TestLevel::LoadMap(const std::string& fileName)
+void TestLevel::LoadMap()
 {
 	// 최종 경로 조립
-	std::string path = std::string("../Assets/") + fileName;
+	std::string path = std::string("../Assets/") + levelName;
 
 	/* C++ 스타일 */
 	// 파일 열기 - 파일 크기와 실제 읽을 바이트 수를 일치시키기 위해 binary 사용
@@ -89,15 +99,13 @@ void TestLevel::LoadMap(const std::string& fileName)
 			switch (str[n])
 			{
 			case 'P':
-				SpawnActor<Player>(position);
-				levelData.emplace_back(str[n]);
+				player = SpawnActor<Player>(position);
 				break;
 			case '#':
 			case '=':
 			{
 				std::string s = std::string(1, str[n]);
 				SpawnActor<Terrain>(s, position);
-				levelData.emplace_back(str[n]);
 				break;
 			}
 			case '*':
@@ -115,14 +123,12 @@ void TestLevel::LoadMap(const std::string& fileName)
 					isActorSpawning = false;
 					size = 0;
 				}
-				levelData.emplace_back(' ');
 				break;
 			case '(':
 			case '{':
 			case '[':
 			{
 				size = 1;
-				levelData.emplace_back(' ');
 				break;
 			}
 			case ')':
@@ -132,7 +138,6 @@ void TestLevel::LoadMap(const std::string& fileName)
 				current = nullptr;
 				size = 0;
 				isActorSpawning = false;
-				levelData.emplace_back(' ');
 				break;
 			case '}':
 				assert(current && "* finished, but no current platform");
@@ -141,7 +146,6 @@ void TestLevel::LoadMap(const std::string& fileName)
 				current = nullptr;
 				size = 0;
 				isActorSpawning = false;
-				levelData.emplace_back(' ');
 				break;
 			case ']':
 				assert(current && "* finished, but no current platform");
@@ -149,7 +153,6 @@ void TestLevel::LoadMap(const std::string& fileName)
 				current = nullptr;
 				size = 0;
 				isActorSpawning = false;
-				levelData.emplace_back(' ');
 				break;
 			case 'R':
 				if (!isActorSpawning && size == 1)
@@ -161,8 +164,6 @@ void TestLevel::LoadMap(const std::string& fileName)
 				{
 					++size;
 				}
-				
-				levelData.emplace_back('-');
 				break;
 			case 'G':
 				if (!isActorSpawning && size == 1)
@@ -174,8 +175,6 @@ void TestLevel::LoadMap(const std::string& fileName)
 				{
 					++size;
 				}
-
-				levelData.emplace_back('-');
 				break;
 			case 'B':
 				if (!isActorSpawning && size == 1)
@@ -187,8 +186,6 @@ void TestLevel::LoadMap(const std::string& fileName)
 				{
 					++size;
 				}
-
-				levelData.emplace_back('-');
 				break;
 			case 'W':
 				if (!isActorSpawning && size == 1)
@@ -200,8 +197,6 @@ void TestLevel::LoadMap(const std::string& fileName)
 				{
 					++size;
 				}
-
-				levelData.emplace_back('-');
 				break;
 			case '^':
 			case '<':
@@ -210,11 +205,15 @@ void TestLevel::LoadMap(const std::string& fileName)
 			{
 				std::string s = std::string(1, str[n]);
 				SpawnActor<Obstacle>(s, position);
-				levelData.emplace_back(str[n]);
-				break;
 			}
+				break;
+			case 'K':
+				SpawnActor<Key>(position);
+				break;
+			case 'M':
+				SpawnActor<Door>(position);
+				break;
 			default:
-				levelData.emplace_back(' ');
 				break;
 			}
 
@@ -232,65 +231,119 @@ void TestLevel::LoadMap(const std::string& fileName)
 	file.close();
 }
 
-bool TestLevel::CanMove(const Vector2& nextPosition, Platformer::Color color)
+void TestLevel::UpdateScreen(float deltaTime)
 {
-	if (nextPosition.x < 0 || screenStartX < 0)
+	float posX = player.get()->GetPosition().x - screenStartX;
+
+	if (posX > rightBaseScreenPosX)
 	{
-		return false;
+		screenStartX += screenSpeed * deltaTime;
+	}
+	else if (posX < leftBaseScreenPosX)
+	{
+		screenStartX -= screenSpeed * deltaTime;
 	}
 
-	short idx = nextPosition.y * levelWidth + nextPosition.x;
-	if (levelData[idx] == '=' || levelData[idx] == '^' || levelData[idx] == '#')
+	if (screenStartX < 0.0f)
 	{
-		return false;
+		screenStartX = 0;
 	}
-
-	if (levelData[idx] == '-')
+	else if (screenStartX > maxScreenStartX)
 	{
-		for (std::shared_ptr<Actor>& actor : actorList)
+		screenStartX = static_cast<float>(maxScreenStartX);
+	}
+}
+
+void TestLevel::VictoryEffect(float deltaTime)
+{
+	if (victoryEffectTimer < 4.0f)
+	{
+		victoryEffectTimer += deltaTime;
+
+		int length = static_cast<int>(victory.length());
+		size_t x = static_cast<size_t>(length * victoryEffectTimer / 3.f);
+		if (x > length)
 		{
-			int posX = actor->GetPosition().x;
-			int length = actor->GetImageWidth();
-			if (posX >= nextPosition.x && nextPosition.x < posX + length)
-			{
-				if (actor->GetColor() == color)
-				{
-					return true;
-				}
+			x = length;
+		}
+		std::string str = victory.substr(0, x);
+		Renderer::Get().Submit(str, Vector2(static_cast<int>((screenWidth / 2)), 5), Color::Yellow);
+	}
+	else
+	{
+		levelState = LevelState::Prepare;
+		GameManager& game = dynamic_cast<GameManager&>(Engine::Get());
+		game.LoadNextGameLevel();
+	}
+}
 
-				return false;
+Actor* TestLevel::GetActorAt(const Platformer::Vector2& nextPosition)
+{
+	for (std::shared_ptr<Actor>& actor : actorList)
+	{
+		if (actor->CheckActorPosition(nextPosition))
+		{
+			if (actor->IsTypeOf<Player>())
+			{
+				continue;
 			}
+
+			return actor.get();
 		}
 	}
 
+	return nullptr;
+}
+
+bool TestLevel::CanMove(const Actor* other, Color color)
+{
+	if (other)
+	{
+		if (other->IsTypeOf<Terrain>() || other->IsTypeOf<Obstacle>())
+		{
+			return false;
+		}
+		if (other->IsTypeOf<Key>() || other->IsTypeOf<Door>())
+		{
+			return true;
+		}
+		else if (other->GetColor() != color)
+		{
+			return false;
+		}
+	}
 
 	return true;
 }
 
-void TestLevel::CheckPlayerXPos(int playerX)
+void TestLevel::HandleInteraction(Actor* target, const Platformer::Vector2& direction)
 {
-	if (playerX > rightBasePosX)
-	{
-		targetScreenX += wannaOffsetX;
-		rightBasePosX += wannaOffsetX;
-		leftBasePosX += wannaOffsetX;
+	assert(target && "No Actor for interaction");
 
-		if (targetScreenX > maxScreenStartX)
+	if (target->IsTypeOf<Key>())
+	{
+		target->Destroy();
+		player.get()->GetKey();
+	}
+	else if (target->IsTypeOf<Door>())
+	{
+		if (player.get()->HasKey())
 		{
-			targetScreenX = maxScreenStartX;
+			victoryEffectTimer = 0.0f;
+			player->UpdatePlayerInput(false);
+			levelState = LevelState::ClearEffect;
 		}
 	}
-	else if (playerX < leftBasePosX)
+	else if (target->IsTypeOf<Obstacle>())
 	{
-		targetScreenX -= wannaOffsetX;
-		rightBasePosX -= wannaOffsetX;
-		leftBasePosX -= wannaOffsetX;
-
-		if (targetScreenX < 0)
+		const std::string image = target->GetImage();
+		if ((image == "^" && direction.x == 0 && direction.y == 1)
+			|| (image == ">" && direction.x == -1 && direction.y == 0)
+			|| (image == "<" && direction.x == 1 && direction.y == 0)
+			|| (image == "v" && direction.x == 0 && direction.y == -1)
+			)
 		{
-			targetScreenX = 0;
-			leftBasePosX = 16;
-			rightBasePosX = 24;
+
 		}
 	}
 }

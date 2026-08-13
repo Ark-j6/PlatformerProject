@@ -1,12 +1,14 @@
 #pragma once
 #include <Actor\Terrain.h>
 
-class Platform : public Terrain
+class Platform : public Platformer::Actor
 {
-	TYPE_DECLARATIONS(Platform, Terrain)
+	TYPE_DECLARATIONS(Platform, Platformer::Actor)
 
 public:
 	Platform(const Platformer::Vector2& position, Platformer::Color color, bool isChangable = false, bool isMovable = false);
+
+	virtual bool CheckActorPosition(const Platformer::Vector2& position) override;
 
 	inline void ChangeWidth(unsigned short newWidth)
 	{

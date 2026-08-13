@@ -45,9 +45,12 @@ namespace Platformer
 		inline Vector2 GetPosition() const { return position; }
 		void SetPosition(const Vector2& newPosition);
 
+		virtual bool CheckActorPosition(const Vector2& position);
+
 		Color GetColor() const { return color; }
 		virtual void ChangeColor();
 
+		inline const std::string GetImage() const { return image; }
 		inline int GetImageWidth() const { return width; }
 
 	protected:

@@ -2,8 +2,6 @@
 #include <Engine/Engine.h>
 #include <Render/Renderer.h>
 
-#include <iostream>
-
 namespace Platformer
 {
 	Actor::Actor(const std::string& image, const Vector2& position, Color color)
@@ -62,6 +60,11 @@ namespace Platformer
 
 		position = newPosition;
 	}
+	bool Actor::CheckActorPosition(const Vector2& position)
+	{
+		return GetPosition() == position;
+	}
+
 	void Actor::ChangeColor()
 	{
 	}

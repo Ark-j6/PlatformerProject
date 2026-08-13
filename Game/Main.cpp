@@ -1,9 +1,9 @@
+#include <Game/GameManager.h>
 #include <Engine/Engine.h>
 #include <Level/TestLevel.h>
 
 int main()
 {
-	Platformer::Engine engine;
-	engine.AddNewLevel<TestLevel>();
-	engine.Run();
+	GameManager manager;
+	manager.Run();
 }

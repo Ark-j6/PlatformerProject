@@ -2,6 +2,7 @@
 
 #include <Core/Core.h>
 
+#include <string>
 #include <memory>	// 스마트 포인터 사용을 위한 추가
 
 // CraftEngine 프로젝트 안의 클래스는 Craft 네임 스페이스 사용
@@ -28,6 +29,14 @@ namespace Platformer
 
 			// 사용할 콘솔 화면 높이
 			int height = 0;
+
+			// 실 게임 화면 크기
+			int gameViewWidth = 60;
+			int	gameviewHegiht = 35;
+
+			// 콘솔 - 게임 화면 오프셋
+			int gameViewOffsetX = 0;
+			int gameViewOffsetY = 0;
 		};
 
 	public:
@@ -42,10 +51,10 @@ namespace Platformer
 
 		// 레벨 추가 요청 함수
 		template<typename T, typename = std::enable_if_t<std::is_base_of<Level, T>::value>>
-		void AddNewLevel()
+		void AddNewLevel(const std::string& newLevel)
 		{
 			// 추가 요청 레벨 객체 생성
-			nextLevel = std::make_shared<T>();
+			nextLevel = std::make_shared<T>(newLevel);
 		}
 
 		// 전역 접근 함수
@@ -54,6 +63,10 @@ namespace Platformer
 		// 설정값 getter
 		inline int GetWidth() const { return setting.width; }
 		inline int GetHeight() const { return setting.height; }
+		inline int GetScreenWidth() const { return setting.gameViewWidth; }
+		inline int GetScreenHeight() const { return setting.gameviewHegiht; }
+		inline int GetXOffset() const { return setting.gameViewOffsetX; }
+		inline int GetYOffset() const { return setting.gameViewOffsetY; }
 
 	protected:
 		// 입력 처리 함수 (입력 풀링). <-> 이벤트 트리거
@@ -80,7 +93,7 @@ namespace Platformer
 		void ShutDown();
 
 		// 엔진 설정 로드 함수
-		void LoadEngineSetting();
+		virtual void LoadEngineSetting();
 
 	protected:
 		// 엔진 종료 요청 여부 플레그
@@ -107,4 +120,3 @@ namespace Platformer
 		std::unique_ptr<Renderer> renderer;
 	};
 }
-

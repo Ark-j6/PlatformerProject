@@ -1,3 +1,9 @@
-framerate = 110
-width = 160
+framerate = 120
+width = 80
 height = 40
+
+gameViewWidth=60
+gameviewHegiht=35 
+
+gameViewOffsetX=10
+gameViewOffsetY=3
