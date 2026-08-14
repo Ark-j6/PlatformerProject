@@ -12,6 +12,13 @@ Player::Player(const Vector2& position) : super("P", position, Color::Green)
 	posY = static_cast<float>(position.y);
 }
 
+Player::Player(const Platformer::Vector2& position, Platformer::Color color) : super("P", position, color)
+{
+	sortingOrder = 3;
+	posX = static_cast<float>(position.x);
+	posY = static_cast<float>(position.y);
+}
+
 void Player::ChangeColor()
 {
 	switch (color)
@@ -36,10 +43,18 @@ void Player::ChangeColor()
 
 void Player::UpdateStandingPlatform(Platform* platform)
 {
-	if (standingPlatform == platform)
+	if (standingPlatform == platform || !platform->isMovable)
 		return;
 
 	standingPlatform = platform; 
+}
+
+void Player::GoToCheckPoint(const Platformer::Vector2& nextPosition)
+{
+	SetPosition(nextPosition);
+	posX = static_cast<float>(position.x);
+	posY = static_cast<float>(position.y);
+	UpdatePlayerInput(true);
 }
 
 void Player::Tick(float deltaTime)
@@ -56,46 +71,21 @@ void Player::Tick(float deltaTime)
 		return;
 	}
 
-	if (standingPlatform)
+	// 이동 플랫폼의 이동량 반영
+	if (standingPlatform && !isJumping)
 	{
 		float platX = 0;
 		float platY = 0;
-		standingPlatform->CurrentDelta(platX, platY);
+		standingPlatform->GetCurrentPlatformPos(platX, platY);
 
-		std::string s = "Delta x - " + std::to_string(platX) + ", DeltaY - " + std::to_string(platY) + "\n";
-		OutputDebugStringA(s.c_str());
-
-		float newPosX = posX + platX;
-		float newPosY = posY + platY;
-
-		if (std::shared_ptr<PlatformLevel> level = Cast<PlatformLevel>(GetOwner()))
+		if (standingPlatform->currentDirection.x != 0)
 		{
-			Vector2 newPosition = GetPosition();
-			newPosition.x = static_cast<int>(newPosX);
-			newPosition.y = static_cast<int>(newPosY);
-
-			// 해당 위치에 액터가 있을 경우, 이동 가능한 액터인지 검사
-			if (Actor* actor = level->GetActorAt(newPosition))
-			{
-				if (level->CanMove(actor, color))
-				{
-					posX = newPosX;
-					posY = newPosY;
-				}
-
-				// 액터가 있으므로 이동 가능 여부와 상관없이 상호작용 검사
-				Vector2 direction = newPosition - GetPosition();
-				level->HandleInteraction(actor, direction);
-			}
-			else
-			{
-				// 액터가 없을 경우 불가능한 지역(래벨 범위 외부)인지 여부만 확인
-				if (level->CheckValidXPos(newPosition.x) || level->CheckValidYPos(newPosition.y))
-				{
-					posX = newPosX;
-					posY = newPosY;
-				}
-			}
+			posX += platX;
+		}
+		else
+		{
+			posY = platY - 1.0f;
+			velocityY = 0.f;
 		}
 	}
 
@@ -110,64 +100,42 @@ void Player::Tick(float deltaTime)
 		ProcessInput(-1.f, deltaTime);
 	}
 
+	// 이동 결과 플랫폼 밖으로 나갔는지 확인
+	if (standingPlatform && !isJumping)
+	{
+		const int playerX = static_cast<int>(posX);
+
+		const int platformLeft = standingPlatform->GetPosition().x;
+		const int platformRignt = platformLeft + standingPlatform->GetImageWidth() - 1;
+
+		if (playerX < platformLeft || playerX > platformRignt)
+		{
+			standingPlatform = nullptr;
+		}
+	}
+
+
 	// 점프
 	if (Input::Get().GetKeyDown(VK_SPACE) && !isJumping)
 	{
 		isJumping = true;
 		velocityY -= jumpSpeed;
+		standingPlatform = nullptr;
 		RequestChangeColor();
 	}
 
-	velocityY += gravity * deltaTime;
-	if (velocityY > 30.f)
+	// 중력 적용 -> Y축 이동 여부 결정
+	if (!standingPlatform || isJumping)
 	{
-		velocityY = 30.f;
-	}
-	float newPosY = posY + velocityY * deltaTime;
-	int next = static_cast<int>(newPosY);
-	
-	if (std::shared_ptr<PlatformLevel> level = Cast<PlatformLevel>(GetOwner()))
-	{
-		Vector2 newPosition = GetPosition();
-		newPosition.y = next;
-
-		// 해당 위치에 액터가 있을 경우, 이동 가능한 액터인지 검사
-		if (Actor* actor = level->GetActorAt(newPosition))
+		velocityY += gravity * deltaTime;
+		if (velocityY > 30.f)
 		{
-			if (level->CanMove(actor, color))
-			{
-				posY = newPosY;
-			}
-			else
-			{
-				isJumping = false;
-				velocityY = 0;
-			}
-
-  
-      	  	 	// 액터가 있으므로 이동 가능 여부와 상관없이 상호작용 검사
-			Vector2 direction = newPosition - GetPosition();
-			level->HandleInteraction(actor, direction);
+			velocityY = 30.f;
 		}
-		else
-		{
-			standingPlatform = nullptr;
+		float newPosY = posY + velocityY * deltaTime;
 
-			// 액터가 없을 경우 불가능한 지역(래벨 범위 외부)인지 여부만 확인
-			if (level->CheckValidYPos(newPosition.y))
-			{
-				posY = newPosY;
-			}
-			else
-			{
-				isJumping = false;
-				velocityY = 0;
-			}
-		}
+		CheckPlayerMovement(false, newPosY);
 	}
-
-	std::string s = "posx - " + std::to_string(posX) + ", posY - " + std::to_string(posY) + "\n";
-	OutputDebugStringA(s.c_str());
 
 	SetPosition(Vector2(static_cast<int>(posX), static_cast<int>(posY)));
 }
@@ -176,83 +144,21 @@ void Player::ProcessInput(float direction, float deltaTime)
 {
 	float amount = direction * moveSpeed * deltaTime;
 	float newPosX = posX + amount;
-	int next = static_cast<int>(newPosX);
 
-	if (next == GetPosition().x)
+	CheckPlayerMovement(true, newPosX);
+}
+
+void Player::CheckPlayerMovement(bool isX, float newValue)
+{
+	int next = static_cast<int>(newValue);
+	int current = isX ? GetPosition().x : GetPosition().y;
+
+	if (next == current)
 	{
-		posX = newPosX;
+		isX ? posX = newValue : posY = newValue;
 		return;
 	}
 
-	if (std::shared_ptr<PlatformLevel> level = Cast<PlatformLevel>(GetOwner()))
-	{
-		Vector2 newPosition = GetPosition();
-		newPosition.x = next;
-
-		// 해당 위치에 액터가 있을 경우, 이동 가능한 액터인지 검사
-		if (Actor* actor = level->GetActorAt(newPosition))
-		{
-			if (level->CanMove(actor, color))
-			{
-				posX = newPosX;
-			}
-
-			// 액터가 있으므로 이동 가능 여부와 상관없이 상호작용 검사
-			Vector2 direction = newPosition - GetPosition();
-			level->HandleInteraction(actor, direction);
-		}
-		else
-		{
-			// 액터가 없을 경우 불가능한 지역(래벨 범위 외부)인지 여부만 확인
-			if (level->CheckValidXPos(next))
-			{
-				posX = newPosX;
-			}
-		}
-	}
-}
-
-
-void Player::legacyMove(float direction, float deltaTime)
-{
-	float amount = direction * moveSpeed * deltaTime;
-	posX += amount;
-	int next = static_cast<int>(posX);
-
-	if (next == GetPosition().x)
-		return;
-
-	if (std::shared_ptr<PlatformLevel> level = Cast<PlatformLevel>(GetOwner()))
-	{
-		Vector2 newPosition = GetPosition();
-		newPosition.x = next;
-
-		// 해당 위치에 액터가 있을 경우, 이동 가능한 액터인지 검사
-		if (Actor* actor = level->GetActorAt(newPosition))
-		{
-			if (level->CanMove(actor, color))
-			{
-				SetPosition(newPosition);
-			}
-
-			// 액터가 있으므로 이동 가능 여부와 상관없이 상호작용 검사
-			Vector2 direction = newPosition - GetPosition();
-			level->HandleInteraction(actor, direction);
-		}
-		else
-		{
-			// 액터가 없을 경우 불가능한 지역(래벨 범위 외부)인지 여부만 확인
-			if (level->CheckValidXPos(next))
-			{
-				SetPosition(newPosition);
-			}
-		}
-	}
-
-}
-
-void Player::RequestMove(bool isX, const int next, const float amount)
-{
 	if (std::shared_ptr<PlatformLevel> level = Cast<PlatformLevel>(GetOwner()))
 	{
 		Vector2 newPosition = GetPosition();
@@ -263,17 +169,11 @@ void Player::RequestMove(bool isX, const int next, const float amount)
 		{
 			if (level->CanMove(actor, color))
 			{
-				//isX ? posX += amount : posY += amount;
-				if (!isX) posY = amount;
-				SetPosition(newPosition);
+				isX ? posX = newValue : posY = newValue;
 			}
 			else
 			{
-				if (isX)
-				{ 
-					posX -= amount;
-				}
-				else
+				if (!isX)
 				{
 					isJumping = false;
 					velocityY = 0;
@@ -287,17 +187,20 @@ void Player::RequestMove(bool isX, const int next, const float amount)
 		else
 		{
 			// 액터가 없을 경우 불가능한 지역(래벨 범위 외부)인지 여부만 확인
- 			if (isX ? level->CheckValidXPos(next) : level->CheckValidYPos(next))
+			if (isX)
 			{
-				//isX ? posX += amount : posY += amount;
-				if (!isX) posY = amount;
-				SetPosition(newPosition);
+				if (level->CheckValidXPos(next))
+				{
+					posX = newValue;
+				}
 			}
 			else
 			{
-				if (isX)
+				standingPlatform = nullptr;
+
+				if (level->CheckValidYPos(next))
 				{
-					posX -= amount;
+					posY = newValue;
 				}
 				else
 				{

@@ -80,10 +80,10 @@ void Platform::Moving(float deltaTime)
 	float interval = config.speed * deltaTime;
 
 	prevX = currentDirection.x * interval;
-	prevY = currentDirection.y * interval;
+	movingY += currentDirection.y * interval;
 
 	movingX += prevX;
-	movingY += prevY;
+	prevY = movingY;
 
 	int newX = static_cast<int>(movingX);
 	int newY = static_cast<int>(movingY);

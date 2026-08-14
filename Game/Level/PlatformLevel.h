@@ -9,6 +9,7 @@ enum class LevelState
 {
 	Prepare = 0,
 	Start,
+	DeathEffect,
 	ClearEffect,
 	Clear
 };
@@ -32,7 +33,7 @@ private:
 
 	void UpdateScreen(float deltaTime);
 
-	void VictoryEffect(float deltaTime);
+	void Ouch();
 
 public:
 	Platformer::Actor* GetActorAt(const Platformer::Vector2& nextPosition);
@@ -44,10 +45,10 @@ public:
 	inline bool CheckValidYPos(const int posY) const { return !(posY < 0 || posY > levelHeight); }
 	void ChangeActorColors();
 
-private:
-	const std::string victory = "Stage Clear!";
-	const std::string fail = "GAME OVER";
+	void RespawnPlayer();
+	void RequestNextLevel();
 
+private:
 	std::string levelName = "";
 
 	LevelState levelState = LevelState::Prepare;
@@ -72,6 +73,7 @@ private:
 	int targetScreenX = 0;				// 자연스러운 화면 이동을 위한 변수
 	float screenStartX = 0;				// 실 화면의 시작 위치
 
-	float victoryEffectTimer = 0.0f;
+	Platformer::Vector2 currentCheckPoint = Platformer::Vector2::Zero;
+	Platformer::Color lastPlayerColor = Platformer::Color::White;
 };
 

@@ -47,7 +47,7 @@ void GameManager::TogglePauseMenu()
 void GameManager::LoadNextGameLevel()
 {
 	++currentStageIndex;
-	if (currentStageIndex > stageList.size())
+	if (currentStageIndex >= stageList.size())
 	{
 		menuIndex = MenuState::Title;
 		mainLevel = menuList[static_cast<int>(menuIndex)];

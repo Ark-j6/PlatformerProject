@@ -1,6 +1,5 @@
 ﻿#include "PlatformLevel.h"
 #include <Game/GameManager.h>
-#include <Render/Renderer.h>
 #include <Math/Vector2.h>
 #include <Actor/Player.h>
 #include <Actor/Terrain.h>
@@ -8,8 +7,11 @@
 #include <Actor/Obstacle.h>
 #include <Actor/Key.h>
 #include <Actor/Door.h>
-
-#include <Windows.h>
+#include <Actor/CheckPoint.h>
+#include <Actor/DeadZone.h>
+#include <Effect/CheckpointEffect.h>
+#include <Effect/DeathEffect.h>
+#include <Effect/VictoryEffect.h>
 
 #include <fstream>
 #include <cassert>
@@ -30,19 +32,17 @@ void PlatformLevel::OnInitialized()
 	LoadMapConfig();
 	maxScreenStartX = levelWidth - screenWidth;
 
+	currentCheckPoint = player->GetPosition();
 	levelState = LevelState::Start;
-	player->UpdatePlayerInput(true);
 }
 
 void PlatformLevel::Tick(float deltaTime)
 {
 	super::Tick(deltaTime);
 
-	UpdateScreen(deltaTime);
-
-	if (levelState == LevelState::ClearEffect)
+	if (levelState == LevelState::Start)
 	{
-		VictoryEffect(deltaTime);
+		UpdateScreen(deltaTime);
 	}
 }
 
@@ -58,7 +58,7 @@ void PlatformLevel::Draw()
 
 		// Screen 영역 내에 있는 actor에 한해서 Draw 이벤트 호출
 		int screenEnd = static_cast<int>(screenStartX + screenWidth);
-		if (screenStartX <= actor->GetPosition().x && actor->GetPosition().x < screenEnd)
+ 		if (screenStartX <= actor->GetPosition().x && actor->GetPosition().x < screenEnd)
 		{
 			int pivot = static_cast<int>(screenStartX - Engine::Get().GetXOffset());
 			actor->Draw(pivot);
@@ -85,6 +85,9 @@ void PlatformLevel::LoadMap()
 	Platform* current = nullptr;
 	unsigned short size = 0;
 
+	bool isPlayerFound = false;
+	Vector2 playerPos = Vector2::Zero;
+
 	std::string str;
 	while (std::getline(file, str))
 	{
@@ -102,7 +105,8 @@ void PlatformLevel::LoadMap()
 			switch (str[n])
 			{
 			case 'P':
-				player = SpawnActor<Player>(position);
+				isPlayerFound = true;
+				playerPos = position;
 				break;
 			case '#':
 			case '=':
@@ -216,6 +220,12 @@ void PlatformLevel::LoadMap()
 			case 'M':
 				SpawnActor<Door>(position);
 				break;
+			case 'C':
+				SpawnActor<CheckPoint>(position);
+				break;
+			case 'D':
+				SpawnActor<DeadZone>(position);
+				break;
 			default:
 				break;
 			}
@@ -226,6 +236,11 @@ void PlatformLevel::LoadMap()
 		++position.y;
 	}
 	
+	// 플레이어의 이동 처리를 가장 후순으로 만들기 위해서 의도적으로 마지막에 Spawn시도
+	if (isPlayerFound)
+	{
+		player = SpawnActor<Player>(playerPos);
+	}
 
 	levelHeight = position.y;
 
@@ -245,21 +260,26 @@ void PlatformLevel::LoadMapConfig()
 		return;
 	}
 
-	Vector2 pos = Vector2::Zero;
 	std::string str;
 	size_t prev = 0, current = 0;
 	
 	PlatformConfig config = {};
 	int idx = 0;
+	bool canRead = false;
 
 	while (std::getline(file, str))
 	{
 		if (!str.empty() && str.back() == '\r')
 			str.pop_back();
 
+		if (str.find_first_not_of(" \t") == std::string::npos)
+		{
+			canRead = false;
+			continue;
+		}
 		if (str.front() == '[' && str.back() == ']')
 		{
-			OutputDebugStringA(str.c_str());
+			canRead = true;
 			continue;
 		}
 		else if (!str.empty())
@@ -331,7 +351,7 @@ void PlatformLevel::ParsingConfig(Platformer::PlatformConfig& config, const std:
 
 void PlatformLevel::UpdateScreen(float deltaTime)
 {
-	float posX = player.get()->GetPosition().x - screenStartX;
+	float posX = player->GetPosition().x - screenStartX;
 
 	if (posX > rightBaseScreenPosX)
 	{
@@ -352,27 +372,10 @@ void PlatformLevel::UpdateScreen(float deltaTime)
 	}
 }
 
-void PlatformLevel::VictoryEffect(float deltaTime)
+void PlatformLevel::Ouch()
 {
-	if (victoryEffectTimer < 4.0f)
-	{
-		victoryEffectTimer += deltaTime;
-
-		int length = static_cast<int>(victory.length());
-		size_t x = static_cast<size_t>(length * victoryEffectTimer / 3.f);
-		if (x > length)
-		{
-			x = length;
-		}
-		std::string str = victory.substr(0, x);
-		Renderer::Get().Submit(str, Vector2(static_cast<int>((screenWidth / 2)), 5), Color::Yellow);
-	}
-	else
-	{
-		levelState = LevelState::Prepare;
-		GameManager& game = dynamic_cast<GameManager&>(Engine::Get());
-		game.LoadNextGameLevel();
-	}
+	player->UpdatePlayerInput(false);
+	levelState = LevelState::DeathEffect;
 }
 
 Actor* PlatformLevel::GetActorAt(const Platformer::Vector2& nextPosition)
@@ -423,7 +426,7 @@ bool PlatformLevel::CanMove(const Actor* other, Color color)
 		{
 			return true;
 		}
-		else if (other->GetColor() != color)
+		else if (other->IsTypeOf<Platform>() && other->GetColor() != color)
 		{
 			return false;
 		}
@@ -439,15 +442,25 @@ void PlatformLevel::HandleInteraction(Actor* target, const Platformer::Vector2& 
 	if (target->IsTypeOf<Key>())
 	{
 		target->Destroy();
-		player.get()->GetKey();
+		player->GetKey();
 	}
 	else if (target->IsTypeOf<Door>())
 	{
-		if (player.get()->HasKey())
+		bool isThereKey = false;
+
+		for (auto& key : actorList)
 		{
-			victoryEffectTimer = 0.0f;
-			player->UpdatePlayerInput(false);
+			if (key->IsTypeOf<Key>())
+			{
+				isThereKey = true;
+			}
+		}
+
+		if (!isThereKey || player->HasKey())
+		{
 			levelState = LevelState::ClearEffect;
+			player->Destroy();
+			SpawnActor<VictoryEffect>(Vector2(static_cast<int>(screenStartX + (screenWidth / 2)), 5));
 		}
 	}
 	else if (target->IsTypeOf<Obstacle>())
@@ -459,12 +472,30 @@ void PlatformLevel::HandleInteraction(Actor* target, const Platformer::Vector2& 
 			|| (image == "v" && direction.x == 0 && direction.y == -1)
 			)
 		{
-
+			levelState = LevelState::DeathEffect;
+			lastPlayerColor = player->GetColor();
+			player->Destroy();
+			SpawnActor<DeathEffect>(player->GetPosition());
+			player = nullptr;
 		}
 	}
 	else if (target->IsTypeOf<Platform>())
 	{
-		player.get()->UpdateStandingPlatform(dynamic_cast<Platform*>(target));
+		player->UpdateStandingPlatform(dynamic_cast<Platform*>(target));
+	}
+	else if (target->IsTypeOf<CheckPoint>())
+	{
+		currentCheckPoint = target->GetPosition();
+		target->Destroy();
+		SpawnActor<CheckpointEffect>(target->GetPosition());
+	}
+	else if (target->IsTypeOf<DeadZone>())
+	{
+		levelState = LevelState::DeathEffect;
+		lastPlayerColor = player->GetColor();
+		player->Destroy();
+		SpawnActor<DeathEffect>(player->GetPosition());
+		player = nullptr;
 	}
 }
 
@@ -474,4 +505,17 @@ void PlatformLevel::ChangeActorColors()
 	{
 		actor->ChangeColor();
 	}
+}
+
+void PlatformLevel::RespawnPlayer()
+{
+	levelState = LevelState::Start;
+	player = SpawnActor<Player>(currentCheckPoint, lastPlayerColor);
+}
+
+void PlatformLevel::RequestNextLevel()
+{
+	levelState = LevelState::Prepare;
+	GameManager& game = dynamic_cast<GameManager&>(Engine::Get());
+	game.LoadNextGameLevel();
 }

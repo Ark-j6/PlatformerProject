@@ -9,6 +9,7 @@ class Player : public Platformer::Actor
 
 public:
 	Player(const Platformer::Vector2& position);
+	Player(const Platformer::Vector2& position, Platformer::Color color);
 
 	virtual void ChangeColor() override;
 	
@@ -19,18 +20,19 @@ public:
 
 	void UpdateStandingPlatform(Platform* platform);
 
+	void GoToCheckPoint(const Platformer::Vector2& nextPosition);
+
 private:
 	virtual void Tick(float deltaTime) override;
 
 	void ProcessInput(float direction, float deltaTime);
 
-	void legacyMove(float direction, float deltaTime);
-	void RequestMove(bool isX, const int next, const float amount);
+	void CheckPlayerMovement(bool isX, float newValue);
 
 	void RequestChangeColor();
 
 private:
-	bool enableInput = false;
+	bool enableInput = true;
 
 	Platform* standingPlatform = nullptr;
 

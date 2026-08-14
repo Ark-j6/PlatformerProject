@@ -19,13 +19,20 @@ void Door::Draw(int screenX)
 	// 렌더러에 필요한 데이터 제출
 	Vector2 screenPos = position;
 	screenPos.x -= screenX;
-	Renderer::Get().Submit(image, screenPos - Vector2(-1, -1), color, sortingOrder);
-	Renderer::Get().Submit(image, screenPos - Vector2(1, -1), color, sortingOrder);
-	Renderer::Get().Submit(image, screenPos - Vector2(-1, 0), color, sortingOrder);
-	Renderer::Get().Submit(image, screenPos - Vector2(1, 0), color, sortingOrder);
-	Renderer::Get().Submit(image, screenPos - Vector2(-1, 1), color, sortingOrder);
-	Renderer::Get().Submit(image, screenPos - Vector2(0, 1), color, sortingOrder);
-	Renderer::Get().Submit(image, screenPos - Vector2(1, 1), color, sortingOrder);
+
+	Renderer::Get().Submit(image, screenPos + Vector2(1, -1), color, sortingOrder);
+	Renderer::Get().Submit(image, screenPos + Vector2(0, -1), color, sortingOrder);
+	Renderer::Get().Submit(image, screenPos + Vector2(-1, -1), color, sortingOrder);
+
+	Renderer::Get().Submit(image, screenPos + Vector2(-1, 0), color, sortingOrder);
+	Renderer::Get().Submit(image, screenPos + Vector2(1, 0), color, sortingOrder);
+
+	Renderer::Get().Submit(image, screenPos + Vector2(1, 1), color, sortingOrder);
+	Renderer::Get().Submit(image, screenPos + Vector2(-1, 1), color, sortingOrder);
+
+
+	Renderer::Get().Submit(" ", screenPos, Color::ExitZone, sortingOrder);
+	Renderer::Get().Submit(" ", screenPos + Vector2(0, 1), Color::ExitZone, sortingOrder);
 }
 
 bool Door::CheckActorPosition(const Vector2& position)

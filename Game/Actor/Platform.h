@@ -28,7 +28,7 @@ public:
 
 	virtual void SetMovableConfig(Platformer::PlatformConfig config) override;
 
-	void CurrentDelta(float& x, float& y) const {	x = prevX; y = prevY; }
+	void GetCurrentPlatformPos(float& x, float& y) const {	x = prevX; y = prevY; }
 
 protected:
 	virtual void Moving(float deltaTime) override;
@@ -37,7 +37,6 @@ protected:
 private:
 	Platformer::PlatformConfig config;
 
-	Platformer::Vector2 currentDirection = Platformer::Vector2::Zero;
 
 	float prevX = 0;
 	float prevY = 0;
@@ -51,6 +50,7 @@ private:
 	const float waitDuration = 0.2f;
 
 public:
+	Platformer::Vector2 currentDirection = Platformer::Vector2::Zero;
 	bool isColorChangable = false;
 	bool isMovable = false;
 };

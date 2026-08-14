@@ -15,6 +15,8 @@ namespace Platformer
 		Yellow = Red | Green,
 		Cyan = Green | Blue,
 		Purple = Red | Blue,
-		BrightWhite = White | FOREGROUND_INTENSITY
+		BrightWhite = White | FOREGROUND_INTENSITY,
+		CheckPoint = White | BACKGROUND_GREEN,
+		ExitZone = Red | Blue | BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_RED
 	};
 }

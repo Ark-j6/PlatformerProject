@@ -98,24 +98,36 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Actor\CheckPoint.cpp" />
+    <ClCompile Include="Actor\DeadZone.cpp" />
     <ClCompile Include="Actor\Door.cpp" />
     <ClCompile Include="Actor\Key.cpp" />
     <ClCompile Include="Actor\Obstacle.cpp" />
     <ClCompile Include="Actor\Platform.cpp" />
     <ClCompile Include="Actor\Player.cpp" />
     <ClCompile Include="Actor\Terrain.cpp" />
+    <ClCompile Include="Effect\CheckpointEffect.cpp" />
+    <ClCompile Include="Effect\DeathEffect.cpp" />
+    <ClCompile Include="Effect\Effect.cpp" />
+    <ClCompile Include="Effect\VictoryEffect.cpp" />
     <ClCompile Include="Game\GameManager.cpp" />
     <ClCompile Include="Level\PlatformLevel.cpp" />
     <ClCompile Include="Level\TitleLevel.cpp" />
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Actor\CheckPoint.h" />
+    <ClInclude Include="Actor\DeadZone.h" />
     <ClInclude Include="Actor\Door.h" />
     <ClInclude Include="Actor\Key.h" />
     <ClInclude Include="Actor\Obstacle.h" />
     <ClInclude Include="Actor\Platform.h" />
     <ClInclude Include="Actor\Player.h" />
     <ClInclude Include="Actor\Terrain.h" />
+    <ClInclude Include="Effect\CheckpointEffect.h" />
+    <ClInclude Include="Effect\DeathEffect.h" />
+    <ClInclude Include="Effect\Effect.h" />
+    <ClInclude Include="Effect\VictoryEffect.h" />
     <ClInclude Include="Game\GameManager.h" />
     <ClInclude Include="Level\PlatformLevel.h" />
     <ClInclude Include="Level\TitleLevel.h" />
