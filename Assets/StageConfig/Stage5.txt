@@ -8,7 +8,7 @@ looping=1
 autoColor=3
 &
 [PLATFORM_1]
-x=65
+x=67
 y=13
 direction=U
 distance=2

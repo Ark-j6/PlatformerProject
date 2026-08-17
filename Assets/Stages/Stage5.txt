@@ -6,7 +6,7 @@
 #                                                                                                                      #
 #                                                                                                                      #
 #                                                                                                                      #
-#                                                                                       ^   K C                         #
+#                                                                                       ^   K C                        #
 #                                 M                                                    [BBBBBB]                        #
 #                                                                                                                      #
 #                              {RRRRR}                                                                                 #
