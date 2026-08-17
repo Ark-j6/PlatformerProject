@@ -2,12 +2,16 @@
 
 using namespace Platformer;
 
+int Platform::PlatformNumber = 0;
+
 Platform::Platform(const Vector2& position, Color color, bool isChangable, bool isMovable)
 	: Actor("-", position, color), isColorChangable(isChangable), isMovable(isMovable)
 {
 	sortingOrder = 3;
 	movingX = static_cast<float>(position.x);
 	movingY = static_cast<float>(position.y);
+
+	++PlatformNumber;
 }
 
 Platform::~Platform()
@@ -18,23 +22,52 @@ void Platform::Tick(float deltaTime)
 {
 	super::Tick(deltaTime);
 
-	if (!isMovable)
-		return;
-
-	if (isWait)
+	if (isSelfColorChange)
 	{
-		waitTimer += deltaTime;
+		colorTimer += deltaTime;
 
-		if (waitTimer >= waitDuration)
+		if (colorTimer >= colorWaitDuration)
 		{
-			isWait = false;
-			return;
+			colorTimer = 0.f;
+			
+			switch (color)
+			{
+			case Color::White:
+				color = Color::Red;
+				break;
+			case Color::Red:
+				color = Color::Green;
+				break;
+			case Color::Green:
+				color = Color::Blue;
+				break;
+			case Color::Blue:
+				color = Color::White;
+				break;
+			default:
+				break;
+			}
 		}
 	}
 
-	Moving(deltaTime);
+	if (isMovable)
+	{
+		if (isWait)
+		{
+			waitTimer += deltaTime;
 
-	CheckMovingDirection();
+			if (waitTimer >= waitDuration)
+			{
+				isWait = false;
+				return;
+			}
+		}
+		else
+		{
+			Moving(deltaTime);
+			CheckMovingDirection();
+		}
+	}
 }
 
 bool Platform::CheckActorPosition(const Vector2& position)
@@ -72,7 +105,9 @@ void Platform::ChangeColor()
 void Platform::SetMovableConfig(PlatformConfig config)
 {
 	this->config = config;
+	colorWaitDuration = static_cast<float>(config.autoColor);
 	currentDirection = config.direction;
+	isSelfColorChange = config.autoColor != 0;
 }
 
 void Platform::Moving(float deltaTime)

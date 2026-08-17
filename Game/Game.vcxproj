@@ -111,7 +111,10 @@
     <ClCompile Include="Effect\Effect.cpp" />
     <ClCompile Include="Effect\VictoryEffect.cpp" />
     <ClCompile Include="Game\GameManager.cpp" />
+    <ClCompile Include="Level\GameLevel.cpp" />
+    <ClCompile Include="Level\PauseLevel.cpp" />
     <ClCompile Include="Level\PlatformLevel.cpp" />
+    <ClCompile Include="Level\ResultLevel.cpp" />
     <ClCompile Include="Level\TitleLevel.cpp" />
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
@@ -129,7 +132,11 @@
     <ClInclude Include="Effect\Effect.h" />
     <ClInclude Include="Effect\VictoryEffect.h" />
     <ClInclude Include="Game\GameManager.h" />
+    <ClInclude Include="Level\GameLevel.h" />
+    <ClInclude Include="Level\LevelItem.h" />
+    <ClInclude Include="Level\PauseLevel.h" />
     <ClInclude Include="Level\PlatformLevel.h" />
+    <ClInclude Include="Level\ResultLevel.h" />
     <ClInclude Include="Level\TitleLevel.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -1,0 +1,10 @@
+[PLATFORM_0]
+x=44
+y=13
+autoColor=3
+&
+[PLATFORM_1]
+x=83
+y=13
+autoColor=3
+&

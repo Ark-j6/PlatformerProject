@@ -1,16 +1,31 @@
 ﻿#include "GameManager.h"
 #include <Level/TitleLevel.h>
+#include <Level/PauseLevel.h>
 #include <Level/PlatformLevel.h>
+#include <Level/ResultLevel.h>
 
 #include <fileSystem>
 
 GameManager::GameManager()
 {
 	LoadStageList();
+	currentStageIndex = 0;
 
 	menuList.emplace_back(std::make_shared<TitleLevel>());
+	menuList.emplace_back(std::make_shared<PauseLevel>());
+	
 	menuIndex = MenuState::Title;
 	mainLevel = menuList[static_cast<int>(menuIndex)];
+}
+
+void GameManager::Tick(float deltaTime)
+{
+	Engine::Tick(deltaTime);
+
+	if (menuIndex == MenuState::InGame)
+	{
+		totalPlayTime += deltaTime;
+	}
 }
 
 void GameManager::LoadStageList()
@@ -27,8 +42,6 @@ void GameManager::LoadStageList()
 		
 		stageList.emplace_back(entry.path().filename().string());
 	}
-
-	currentStageIndex = 0;
 }
 
 void GameManager::TogglePauseMenu()
@@ -44,15 +57,48 @@ void GameManager::TogglePauseMenu()
 	}
 }
 
+void GameManager::BackToTitle()
+{
+	menuList[static_cast<int>(MenuState::InGame)].reset();
+
+	menuIndex = MenuState::Title;
+	mainLevel = menuList[static_cast<int>(menuIndex)];
+}
+
+void GameManager::StartFirstLevel()
+{
+	totalPlayTime = 0;
+	currentStageIndex = 0;
+
+	menuIndex = MenuState::InGame;
+	menuList.emplace_back(std::make_shared<PlatformLevel>(stageList[currentStageIndex]));
+	mainLevel = menuList[static_cast<int>(menuIndex)];
+}
+
 void GameManager::LoadNextGameLevel()
 {
 	++currentStageIndex;
 	if (currentStageIndex >= stageList.size())
 	{
-		menuIndex = MenuState::Title;
-		mainLevel = menuList[static_cast<int>(menuIndex)];
+		ShowResultLevel();
 		return;
 	}
 
 	AddNewLevel<PlatformLevel>(stageList[currentStageIndex]);
+	menuList[static_cast<int>(MenuState::InGame)] = nextLevel;
+}
+
+void GameManager::ShowResultLevel()
+{
+	menuList.emplace_back(std::make_shared<ResultLevel>(totalPlayTime));
+	menuIndex = MenuState::Result;
+	mainLevel = menuList[static_cast<int>(menuIndex)];
+}
+
+void GameManager::CloseReulstLevel()
+{
+	menuList[static_cast<int>(MenuState::Result)].reset();
+
+	menuIndex = MenuState::Title;
+	mainLevel = menuList[static_cast<int>(menuIndex)];
 }

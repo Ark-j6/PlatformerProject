@@ -1,27 +1,21 @@
 ﻿#pragma once
-#include <Level\GameLevel.h>
 #include <Level/LevelItem.h>
-//#include <string>
+#include <Level/GameLevel.h>
 
-class Player;
-
-class TitleLevel : public GameLevel
+class PauseLevel : public Platformer::Level
 {
 public:
-	TitleLevel();
-	~TitleLevel() = default;
+	PauseLevel();
 
 private:
-	virtual void OnInitialized() override;
 	virtual void Tick(float deltaTime) override;
 	virtual void Draw() override;
 
-	virtual void LoadMap() override;
+	void LoadPauseMenu();
 
 private:
-	const std::string title = "C O L O R   F O R M E R";
-	const std::string control = "< > move    SPACE jump";
-	const std::string input = "^ v select   ENTER confirm";
+	std::vector<std::string> menuString;
+
 
 	// 현재 활성화된 메뉴 아이템 인덱스
 	int currentIndex = 0;
@@ -32,7 +26,6 @@ private:
 	// 미선택된 메뉴 아이템의 색상
 	Platformer::Color unselectdColor = Platformer::Color::White;
 
-	// 메뉴 아이템 배열
 	std::vector<std::unique_ptr<MenuItem>> itemList;
 
 };

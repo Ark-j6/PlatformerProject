@@ -256,96 +256,159 @@ void PlatformLevel::LoadMapConfig()
 	std::ifstream file(path, std::ios::binary);
 	if (!file.is_open())
 	{
-		assert(false && "falied to open stage file\n");
+		//assert(false && "falied to open stage file\n");
 		return;
 	}
 
 	std::string str;
-	size_t prev = 0, current = 0;
-	
 	PlatformConfig config = {};
-	int idx = 0;
 	bool canRead = false;
 
 	while (std::getline(file, str))
 	{
 		if (!str.empty() && str.back() == '\r')
+		{
 			str.pop_back();
+		}
 
 		if (str.find_first_not_of(" \t") == std::string::npos)
 		{
-			canRead = false;
 			continue;
-		}
-		if (str.front() == '[' && str.back() == ']')
-		{
-			canRead = true;
-			continue;
-		}
-		else if (!str.empty())
-		{
-			config = {};
-			idx = 0;
-			prev = 0;
-			while ((current = str.find(',', prev)) != std::string::npos)
-			{
-				ParsingConfig(config, str.substr(prev, current - prev), idx);
-				prev = current + 1;
-				++idx;
-			}
-			ParsingConfig(config, str.substr(prev), idx);
 		}
 
-		if (Actor* actor = GetActorByRequestList(config.basePosition))
+		if (str.front() == '&')
 		{
-			if (MovableObject* mo = dynamic_cast<MovableObject*>(actor))
+			if (Actor* actor = GetActorByRequestList(config.basePosition))
 			{
-				mo->SetMovableConfig(config);
+				if (MovableObject* mo = dynamic_cast<MovableObject*>(actor))
+				{
+					mo->SetMovableConfig(config);
+				}
+				else
+				{
+					assert(false && "MovalbeObject error\n");
+				}
 			}
 			else
 			{
-				assert(false && "MovalbeObject error\n");
+				assert(false && "basePostion error\n");
 			}
+
+			canRead = false;
 		}
-		else
+
+		if (str.front() == '[' && str.back() == ']')
 		{
-			assert(false && "basePostion error\n");
+			canRead = true;
+			config = {};
+			continue;
+		}
+		else if (!str.empty() && canRead)
+		{
+			//주석 건너뛰기
+			if (str[0] == '#')
+			{
+				continue;
+			}
+
+			ParsingConfig(config, str);
 		}
 	}
 
 }
 
-void PlatformLevel::ParsingConfig(Platformer::PlatformConfig& config, const std::string& value, int configIndex)
+void PlatformLevel::ParsingConfig(PlatformConfig& config, const std::string& str)
 {
-	switch (configIndex)
+	// key - value 포맷 파싱
+	const size_t equalPosition = str.find('=');	// 문자열 내 = 위치 확인
+	assert(equalPosition != std::string::npos);
+
+	// 람다식을 이용해서 문자열을 검색하도록
+	auto trim = [](std::string& s)
 	{
-	case 0:
-		config.basePosition.x = std::stoi(value);
-		break;
-	case 1:
-		config.basePosition.y = std::stoi(value);
-		break;
-	case 2:
+		// 공백 문자 집합
+		// ' '	: 스페이스(공백)
+		// \t	: 탭
+		// \r	: 윈도우 개행문자 일자
+		// \n	: 개행 문자
+		const char* whiteSpace = " \t\r\n";
+
+		// 문자열의 앞에서부터 공백이 아닌 첫 문자 위치 검색
+		const size_t begin = s.find_first_not_of(whiteSpace);
+
+		// 공백이 아닌 문자를 못찾은 경우에는 빈 문자열로 설정 후 변환
+		if (begin == std::string::npos)
+		{
+			s.clear();
+			return;
+		}
+
+		// 문자열의 뒤에서부터 공백이 아닌 마지막 문자 위치 검색
+		const size_t end = s.find_last_not_of(whiteSpace);
+		s = s.substr(begin, end - begin + 1);
+		// 예) s = " abc "  -> begin = 1 (a의 index), end = 3 (c의 index)
+	};
+
+	// key 파싱
+	std::string key = str.substr(0, equalPosition);
+
+	// value 파싱 - ' = ' 이후 전체
+	std::string value = str.substr(equalPosition + 1);
+
+	// 람다 호출로 key/value에서 공백 제거
+	trim(key);
+	trim(value);
+
+	// key / value가 제대로 설정됐는지 확인
+	assert(!key.empty() && !value.empty());
+
+	// 속성 읽기
+	if (key == "x")
 	{
-		if (value == "U")
-			config.direction = Vector2(0, -1);
-		else if (value == "D")
-			config.direction = Vector2(0, 1);
-		else if (value == "L")
-			config.direction = Vector2(-1, 0);
-		else							  
-			config.direction = Vector2(1, 0);
+		config.basePosition.x = stoi(value);
 	}
-		break;
-	case 3:
-		config.distance = std::stoi(value);
-		break;
-	case 4:
-		config.speed = std::stoi(value);
-		break;
-	default:
-		config.isLooping = std::stoi(value) == 0 ? false : true;
-		break;
+	else if (key == "y")
+	{
+		config.basePosition.y = stoi(value);
+	}
+	else if (key == "direction")
+	{
+		Vector2 dir = Vector2::Zero;
+
+		if (value == "U")
+		{
+			dir.y = -1;
+		}
+		else if (value == "D")
+		{
+			dir.y = 1;
+		}
+		else if (value == "L")
+		{
+			dir.x = -1;
+		}
+		else
+		{
+			dir.x = 1;
+		}
+
+		config.direction = dir;
+	}
+	else if (key == "distance")
+	{
+		config.distance = stoi(value);
+	}
+	else if (key == "speed")
+	{
+		config.speed = stoi(value);
+	}
+	else if (key == "looping")
+	{
+		config.isLooping = value == "1";
+	}
+	else if (key == "autoColor")
+	{
+		config.autoColor = stoi(value);
 	}
 }
 
@@ -378,64 +441,7 @@ void PlatformLevel::Ouch()
 	levelState = LevelState::DeathEffect;
 }
 
-Actor* PlatformLevel::GetActorAt(const Platformer::Vector2& nextPosition)
-{
-	for (std::shared_ptr<Actor>& actor : actorList)
-	{
-		if (actor->CheckActorPosition(nextPosition))
-		{
-			if (actor->IsTypeOf<Player>())
-			{
-				continue;
-			}
-
-			return actor.get();
-		}
-	}
-
-	return nullptr;
-}
-
-Actor* PlatformLevel::GetActorByRequestList(const Platformer::Vector2& nextPosition)
-{
-	for (std::shared_ptr<Actor>& actor : addRequestedActorList)
-	{
-		if (actor->CheckActorPosition(nextPosition))
-		{
-			if (actor->IsTypeOf<Player>())
-			{
-				continue;
-			}
-
-			return actor.get();
-		}
-	}
-
-	return nullptr;
-}
-
-bool PlatformLevel::CanMove(const Actor* other, Color color)
-{
-	if (other)
-	{
-		if (other->IsTypeOf<Terrain>() || other->IsTypeOf<Obstacle>())
-		{
-			return false;
-		}
-		if (other->IsTypeOf<Key>() || other->IsTypeOf<Door>())
-		{
-			return true;
-		}
-		else if (other->IsTypeOf<Platform>() && other->GetColor() != color)
-		{
-			return false;
-		}
-	}
-
-	return true;
-}
-
-void PlatformLevel::HandleInteraction(Actor* target, const Platformer::Vector2& direction)
+void PlatformLevel::HandleInteraction(Actor* target, const Vector2& direction)
 {
 	assert(target && "No Actor for interaction");
 
@@ -496,14 +502,6 @@ void PlatformLevel::HandleInteraction(Actor* target, const Platformer::Vector2& 
 		player->Destroy();
 		SpawnActor<DeathEffect>(player->GetPosition());
 		player = nullptr;
-	}
-}
-
-void PlatformLevel::ChangeActorColors()
-{
-	for (std::shared_ptr<Actor>& actor : actorList)
-	{
-		actor->ChangeColor();
 	}
 }
 

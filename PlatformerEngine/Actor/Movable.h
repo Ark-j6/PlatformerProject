@@ -11,6 +11,7 @@ namespace Platformer
 		int distance = 0;
 		int speed = 0;
 		bool isLooping = false;
+		int autoColor = 0;
 	};
 
 	class PLATFORMER_API MovableObject

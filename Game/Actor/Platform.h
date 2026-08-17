@@ -37,7 +37,6 @@ protected:
 private:
 	Platformer::PlatformConfig config;
 
-
 	float prevX = 0;
 	float prevY = 0;
 
@@ -48,10 +47,15 @@ private:
 	bool isWait = false;
 	float waitTimer = 0;
 	const float waitDuration = 0.2f;
+	float colorTimer = 0;
+	float colorWaitDuration = 0.2f;
+
+	static int PlatformNumber;
 
 public:
 	Platformer::Vector2 currentDirection = Platformer::Vector2::Zero;
 	bool isColorChangable = false;
 	bool isMovable = false;
+	bool isSelfColorChange = false;
 };
 

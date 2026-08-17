@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include <Level/Level.h>
+#include <Level/GameLevel.h>
 #include <string>
 #include <Actor/Movable.h>
 
@@ -15,9 +15,9 @@ enum class LevelState
 };
 
 
-class PlatformLevel : public Platformer::Level
+class PlatformLevel : public GameLevel
 {
-	TYPE_DECLARATIONS(PlatformLevel, Level)
+	TYPE_DECLARATIONS(PlatformLevel, GameLevel)
 		
 public:
 	PlatformLevel(const std::string& levelName);
@@ -27,26 +27,21 @@ private:
 	virtual void Tick(float deltaTime) override;
 	virtual void Draw() override;
 	
-	void LoadMap();
+	virtual void LoadMap() override;
 	void LoadMapConfig();
-	void ParsingConfig(Platformer::PlatformConfig& config, const std::string& value, int configIndex);
+	void ParsingConfig(Platformer::PlatformConfig& config, const std::string& str);
 
 	void UpdateScreen(float deltaTime);
 
 	void Ouch();
 
 public:
-	Platformer::Actor* GetActorAt(const Platformer::Vector2& nextPosition);
-	Platformer::Actor* GetActorByRequestList(const Platformer::Vector2& nextPosition);
-	bool CanMove(const Platformer::Actor* other, Platformer::Color color);
-	void HandleInteraction(Platformer::Actor* target, const Platformer::Vector2& direction);
-
-	inline bool CheckValidXPos(const int posX) const { return !(posX < 0 || screenStartX < 0); }
-	inline bool CheckValidYPos(const int posY) const { return !(posY < 0 || posY > levelHeight); }
-	void ChangeActorColors();
+	virtual void HandleInteraction(Platformer::Actor* target, const Platformer::Vector2& direction) override;
 
 	void RespawnPlayer();
 	void RequestNextLevel();
+
+	void ResetLevel();
 
 private:
 	std::string levelName = "";
@@ -55,9 +50,6 @@ private:
 
 	// 전체 레벨 크기
 	int levelWidth = 0;
-	int levelHeight = 0;
-
-	int screenWidth = 0;
 
 	std::shared_ptr<Player> player;
 

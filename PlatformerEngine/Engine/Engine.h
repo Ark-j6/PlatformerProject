@@ -81,7 +81,7 @@ namespace Platformer
 		void BeginPlay();
 
 		// 게임 플레이 업데이트 함수
-		void Tick(float deltaTime);
+		virtual void Tick(float deltaTime);
 
 		// 레벨 그리기 함수
 		void Draw();

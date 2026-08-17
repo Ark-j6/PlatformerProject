@@ -9,21 +9,21 @@ VictoryEffect::VictoryEffect(const Vector2& position)
 	this->position.x = position.x - 6;
 
 	sequence = {
-		{"S", 0.28f, Color::Yellow},
-		{"St", 0.28f, Color::Yellow},
-		{"Sta", 0.28f, Color::Yellow},
-		{"Stag", 0.28f, Color::Yellow},
-		{"Stage", 0.28f, Color::Yellow},
-		{"Stage ", 0.28f, Color::Yellow},
-		{"Stage C", 0.28f, Color::Yellow},
-		{"Stage Cl", 0.28f, Color::Yellow},
-		{"Stage Cle", 0.28f, Color::Yellow},
-		{"Stage Clea", 0.28f, Color::Yellow},
-		{"Stage Clear", 0.28f, Color::Yellow},
-		{"Stage Clear!", 0.28f, Color::Yellow},
-		{" ", 0.28f, Color::Yellow},
-		{"Stage Clear!", 0.5f, Color::Yellow},
-		{" ", 0.28f, Color::Yellow},
+		{"S", 0.18f, Color::Yellow},
+		{"St", 0.18f, Color::Yellow},
+		{"Sta", 0.18f, Color::Yellow},
+		{"Stag", 0.18f, Color::Yellow},
+		{"Stage", 0.18f, Color::Yellow},
+		{"Stage ", 0.18f, Color::Yellow},
+		{"Stage C", 0.18f, Color::Yellow},
+		{"Stage Cl", 0.18f, Color::Yellow},
+		{"Stage Cle", 0.18f, Color::Yellow},
+		{"Stage Clea", 0.18f, Color::Yellow},
+		{"Stage Clear", 0.18f, Color::Yellow},
+		{"Stage Clear!", 0.18f, Color::Yellow},
+		{" ", 0.18f, Color::Yellow},
+		{"Stage Clear!", 0.25f, Color::Yellow},
+		{" ", 0.18f, Color::Yellow},
 		{"Stage Clear!", 0.5f, Color::Yellow}
 	};
 

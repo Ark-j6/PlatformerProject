@@ -1,7 +1,8 @@
 ﻿#include "Player.h"
 #include <Input/Input.h>
-#include <Level/PlatformLevel.h>
+#include <Level/GameLevel.h>
 #include <Actor/Platform.h>
+#include <Game/GameManager.h>
 
 using namespace Platformer;
 
@@ -66,26 +67,33 @@ void Player::Tick(float deltaTime)
 
 	if (Input::Get().GetKeyDown(VK_ESCAPE))
 	{
-		// 종료 처리
-		QuitGame();
-		return;
+		GameManager& game = dynamic_cast<GameManager&>(Engine::Get());
+		game.TogglePauseMenu();
 	}
 
 	// 이동 플랫폼의 이동량 반영
 	if (standingPlatform && !isJumping)
 	{
-		float platX = 0;
-		float platY = 0;
-		standingPlatform->GetCurrentPlatformPos(platX, platY);
-
-		if (standingPlatform->currentDirection.x != 0)
+		if (standingPlatform->GetColor() == color)
 		{
-			posX += platX;
+			standingPlatform = nullptr;
 		}
 		else
 		{
-			posY = platY - 1.0f;
-			velocityY = 0.f;
+			float platX = 0;
+			float platY = 0;
+			standingPlatform->GetCurrentPlatformPos(platX, platY);
+
+			if (standingPlatform->currentDirection.x != 0)
+			{
+				posX += platX;
+				CheckPlayerMovement(true, posX);
+			}
+			else
+			{
+				posY = platY - 1.0f;
+				velocityY = 0.f;
+			}
 		}
 	}
 
@@ -159,7 +167,7 @@ void Player::CheckPlayerMovement(bool isX, float newValue)
 		return;
 	}
 
-	if (std::shared_ptr<PlatformLevel> level = Cast<PlatformLevel>(GetOwner()))
+	if (std::shared_ptr<GameLevel> level = Cast<GameLevel>(GetOwner()))
 	{
 		Vector2 newPosition = GetPosition();
 		isX ? newPosition.x = next : newPosition.y = next;
@@ -214,7 +222,7 @@ void Player::CheckPlayerMovement(bool isX, float newValue)
 
 void Player::RequestChangeColor()
 {
-	if (std::shared_ptr<PlatformLevel> level = Cast<PlatformLevel>(GetOwner()))
+	if (std::shared_ptr<GameLevel> level = Cast<GameLevel>(GetOwner()))
 	{
 		level->ChangeActorColors();
 	}
