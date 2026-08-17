@@ -7,10 +7,13 @@
 
 using namespace Platformer;
 
-ResultLevel::ResultLevel(float resultTime)
+ResultLevel::ResultLevel()
 {
 	LoadPauseMenu();
+}
 
+void ResultLevel::UpdateResult(float resultTime)
+{
 	int intTime = static_cast<int>(resultTime);
 
 	minutes = intTime / 60;

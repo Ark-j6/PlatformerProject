@@ -63,6 +63,9 @@ namespace Platformer
 		}
 	}
 
+	void Level::ResetLevel()
+	{}
+
 	void Level::ProcessAddAndDestroyActors()
 	{
 		// 액터 제거 처리

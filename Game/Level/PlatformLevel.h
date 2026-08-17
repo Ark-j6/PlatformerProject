@@ -41,7 +41,7 @@ public:
 	void RespawnPlayer();
 	void RequestNextLevel();
 
-	void ResetLevel();
+	virtual void ResetLevel() override;
 
 private:
 	std::string levelName = "";

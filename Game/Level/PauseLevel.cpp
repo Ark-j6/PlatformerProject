@@ -75,6 +75,7 @@ void PauseLevel::Tick(float deltaTime)
 
 		// 메뉴 아이템에 저장된 로직 실행
 		itemList[currentIndex]->onSelected();
+		currentIndex = 0;
 	}
 }
 

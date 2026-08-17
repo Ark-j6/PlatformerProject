@@ -26,14 +26,7 @@ void PlatformLevel::OnInitialized()
 {
 	super::OnInitialized();
 
-	screenWidth = Engine::Get().GetScreenWidth();
-
-	LoadMap();
-	LoadMapConfig();
-	maxScreenStartX = levelWidth - screenWidth;
-
-	currentCheckPoint = player->GetPosition();
-	levelState = LevelState::Start;
+	ResetLevel();
 }
 
 void PlatformLevel::Tick(float deltaTime)
@@ -516,4 +509,16 @@ void PlatformLevel::RequestNextLevel()
 	levelState = LevelState::Prepare;
 	GameManager& game = dynamic_cast<GameManager&>(Engine::Get());
 	game.LoadNextGameLevel();
+}
+
+void PlatformLevel::ResetLevel()
+{
+	screenWidth = Engine::Get().GetScreenWidth();
+
+	LoadMap();
+	LoadMapConfig();
+	maxScreenStartX = levelWidth - screenWidth;
+
+	currentCheckPoint = player->GetPosition();
+	levelState = LevelState::Start;
 }

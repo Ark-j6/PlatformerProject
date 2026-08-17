@@ -7,7 +7,9 @@ class ResultLevel : public Platformer::Level
 	TYPE_DECLARATIONS(ResultLevel, Level)
 
 public:
-	ResultLevel(float resultTime);
+	ResultLevel();
+
+	void UpdateResult(float resultTime);
 
 private:
 	virtual void Tick(float deltaTime) override;

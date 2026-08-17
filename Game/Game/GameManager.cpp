@@ -13,7 +13,9 @@ GameManager::GameManager()
 
 	menuList.emplace_back(std::make_shared<TitleLevel>());
 	menuList.emplace_back(std::make_shared<PauseLevel>());
-	
+	menuList.emplace_back(std::make_shared<PlatformLevel>(stageList[currentStageIndex]));
+	menuList.emplace_back(std::make_shared<ResultLevel>());
+
 	menuIndex = MenuState::Title;
 	mainLevel = menuList[static_cast<int>(menuIndex)];
 }
@@ -59,8 +61,6 @@ void GameManager::TogglePauseMenu()
 
 void GameManager::BackToTitle()
 {
-	menuList[static_cast<int>(MenuState::InGame)].reset();
-
 	menuIndex = MenuState::Title;
 	mainLevel = menuList[static_cast<int>(menuIndex)];
 }
@@ -71,8 +71,8 @@ void GameManager::StartFirstLevel()
 	currentStageIndex = 0;
 
 	menuIndex = MenuState::InGame;
-	menuList.emplace_back(std::make_shared<PlatformLevel>(stageList[currentStageIndex]));
-	mainLevel = menuList[static_cast<int>(menuIndex)];
+	AddNewLevel<PlatformLevel>(stageList[currentStageIndex]);
+	menuList[static_cast<int>(menuIndex)] = nextLevel;
 }
 
 void GameManager::LoadNextGameLevel()
@@ -90,15 +90,17 @@ void GameManager::LoadNextGameLevel()
 
 void GameManager::ShowResultLevel()
 {
-	menuList.emplace_back(std::make_shared<ResultLevel>(totalPlayTime));
 	menuIndex = MenuState::Result;
-	mainLevel = menuList[static_cast<int>(menuIndex)];
+
+	if (auto result = std::dynamic_pointer_cast<ResultLevel>(menuList[static_cast<int>(menuIndex)]))
+	{
+		result->UpdateResult(totalPlayTime);
+		mainLevel = menuList[static_cast<int>(menuIndex)];
+	}
 }
 
 void GameManager::CloseReulstLevel()
 {
-	menuList[static_cast<int>(MenuState::Result)].reset();
-
 	menuIndex = MenuState::Title;
 	mainLevel = menuList[static_cast<int>(menuIndex)];
 }
